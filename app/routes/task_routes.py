@@ -45,7 +45,15 @@ def validate_task(task_id):
 @tasks_bp.get("")
 def get_all_tasks():
     query = db.Select(Task)
-    tasks = db.session.scalars(query.order_by(Task.id))
+
+    sort_param = request.args.get("sort")
+    if sort_param == "asc":
+        query = query.order_by(Task.title.asc())
+    if sort_param == "desc":
+        query = query.order_by(Task.title.desc())
+
+    # tasks = db.session.scalars(query.order_by(Task.id))
+    tasks = db.session.execute(query).scalars()
 
     tasks_response = []
     for task in tasks:
