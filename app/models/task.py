@@ -8,6 +8,8 @@ class Task(db.Model):
     description: Mapped[str]
     completed_at: Mapped[datetime] = mapped_column(default=None, nullable=True)
     is_complete: Mapped[bool] = mapped_column(default=False)
+    # if completed_at:
+    #     is_complete = True
 
     def task_dict(self):
         task_as_dict = {}
