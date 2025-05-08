@@ -1,6 +1,9 @@
 from flask import Blueprint, request, abort, make_response, Response
 from app.models.goal import Goal
 from ..db import db
+# from app.routes.task_routes import validate_task
+from .route_utilities import validate_model
+from app.models.task import Task
 
 
 
@@ -43,26 +46,28 @@ def get_all_goals():
 
 @goals_bp.get("/<goal_id>")
 def get_one_goal(goal_id):
-    goal = validate_goal(goal_id)
+    # goal = validate_goal(goal_id)
+    goal = validate_model(Goal, goal_id)
     response = {"goal": goal.goal_dict()}
    
     return response
 
 
 
-def validate_goal(goal_id):
-    query = db.select(Goal).where(Goal.id == goal_id)
-    goal = db.session.scalar(query)
+# def validate_goal(goal_id):
+#     query = db.select(Goal).where(Goal.id == goal_id)
+#     goal = db.session.scalar(query)
 
-    if not goal:
-        response = {"message": f"Goal {goal_id} not found"}
-        abort(make_response(response, 404))
+#     if not goal:
+#         response = {"message": f"Goal {goal_id} not found"}
+#         abort(make_response(response, 404))
 
-    return goal 
+#     return goal 
 
 @goals_bp.put("/<goal_id>")
 def update_goal(goal_id):
-    goal = validate_goal(goal_id)
+    # goal = validate_goal(goal_id)
+    goal = validate_model(Goal, goal_id)
     request_body = request.get_json()
     goal.title = request_body["title"]
     goal.id = request_body["id"]
@@ -72,7 +77,37 @@ def update_goal(goal_id):
 
 @goals_bp.delete("/<goal_id>")
 def delete_goal(goal_id):
-    goal = validate_goal(goal_id)
+    # goal = validate_goal(goal_id)
+    goal = validate_model(Goal, goal_id)
     db.session.delete(goal)
     db.session.commit()
     return Response(status=204, mimetype="application/json")
+
+@goals_bp.get("/<goal_id>/tasks")
+def get_tasks_by_goal(goal_id):
+    # goal = validate_goal(goal_id)
+    goal = validate_model(Goal, goal_id)
+    response = goal.goal_dict()
+    response["tasks"] = [task.task_dict() for task in goal.tasks]
+    return response
+
+@goals_bp.post("/<goal_id>/tasks")
+def send_tasks_to_goals(goal_id):
+    # goal = validate_goal(goal_id)
+    goal = validate_model(Goal, goal_id)
+    
+    request_body = request.get_json()
+    task_list = request_body["task_ids"]
+    goal.tasks.clear() #removes existing tasks assoc w the goal
+
+    for task_id in request_body["task_ids"]:
+        new_task = validate_model(Task, task_id)
+        new_task.goal_id = goal_id
+        db.session.commit()
+
+
+    db.session.commit()
+    response = {"id": goal.id, 
+                "task_ids": request_body["task_ids"]}
+
+    return response

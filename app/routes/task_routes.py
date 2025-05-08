@@ -2,6 +2,7 @@ from flask import Blueprint, request, abort, make_response, Response
 from app.models.task import Task
 from ..db import db
 from datetime import datetime
+from .route_utilities import validate_model
 
 
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
@@ -24,22 +25,23 @@ def create_tasks():
 
 @tasks_bp.get("/<task_id>")
 def get_one_task(task_id):
-    task = validate_task(task_id)
+    # task = validate_task(task_id)
+    task = validate_model(Task, task_id)
     response = {"task": task.task_dict()}
    
     return response
 
 
 
-def validate_task(task_id):
-    query = db.select(Task).where(Task.id == task_id)
-    task = db.session.scalar(query)
+# def validate_task(task_id):
+#     query = db.select(Task).where(Task.id == task_id)
+#     task = db.session.scalar(query)
 
-    if not task:
-        response = {"message": f"Task {task_id} not found"}
-        abort(make_response(response, 404))
+#     if not task:
+#         response = {"message": f"Task {task_id} not found"}
+#         abort(make_response(response, 404))
 
-    return task 
+#     return task 
 
 
 
@@ -64,7 +66,8 @@ def get_all_tasks():
 
 @tasks_bp.put("/<task_id>")
 def update_task(task_id):
-    task = validate_task(task_id)
+    # task = validate_task(task_id)
+    task = validate_model(Task, task_id)
     request_body = request.get_json()
     task.title = request_body["title"]
     task.description = request_body["description"]
@@ -73,7 +76,8 @@ def update_task(task_id):
 
 @tasks_bp.delete("/<task_id>")
 def delete_task(task_id):
-    task = validate_task(task_id)
+    # task = validate_task(task_id)
+    task = validate_model(Task, task_id)
     db.session.delete(task)
     db.session.commit()
     return Response(status=204, mimetype="application/json")
@@ -81,8 +85,8 @@ def delete_task(task_id):
 
 @tasks_bp.patch("/<task_id>/mark_complete")
 def mark_complete(task_id):
-    task = validate_task(task_id)
-
+    # task = validate_task(task_id)
+    task = validate_model(Task, task_id)
     task.completed_at = datetime.now()
     
     if task.completed_at:
@@ -96,8 +100,8 @@ def mark_complete(task_id):
 
 @tasks_bp.patch("/<task_id>/mark_incomplete")
 def mark_incomplete(task_id):
-    task = validate_task(task_id)
-
+    # task = validate_task(task_id)
+    task = validate_model(Task, task_id)
     task.completed_at = None
     
     db.session.commit()
