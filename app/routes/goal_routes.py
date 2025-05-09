@@ -2,7 +2,7 @@ from flask import Blueprint, request, abort, make_response, Response
 from app.models.goal import Goal
 from ..db import db
 # from app.routes.task_routes import validate_task
-from .route_utilities import validate_model
+from .route_utilities import validate_model, create_model
 from app.models.task import Task
 
 
@@ -12,17 +12,17 @@ goals_bp = Blueprint("goals_bp", __name__, url_prefix="/goals")
 @goals_bp.post("")
 def create_tasks():
     request_body = request.get_json()
-   
-    try:
-        new_goal = Goal.from_dict(request_body)
-    except KeyError as error:
-        response_body = {"details": "Invalid data"}
-        abort(make_response(response_body, 400))
+    return {"goal": create_model(Goal, request_body)[0]}, 201
+    # try:
+    #     new_goal = Goal.from_dict(request_body)
+    # except KeyError as error:
+    #     response_body = {"details": "Invalid data"}
+    #     abort(make_response(response_body, 400))
 
-    db.session.add(new_goal)
-    db.session.commit()
-    response = {"goal": new_goal.goal_dict()}
-    return response, 201
+    # db.session.add(new_goal)
+    # db.session.commit()
+    # response = {"goal": new_goal.to_dict()}
+    # return response, 201
 
 @goals_bp.get("")
 def get_all_goals():
@@ -39,7 +39,7 @@ def get_all_goals():
 
     goals_response = []
     for goal in goals:
-        goals_response.append(goal.goal_dict())
+        goals_response.append(goal.to_dict())
     return goals_response
 
 
@@ -48,7 +48,7 @@ def get_all_goals():
 def get_one_goal(goal_id):
     # goal = validate_goal(goal_id)
     goal = validate_model(Goal, goal_id)
-    response = {"goal": goal.goal_dict()}
+    response = {"goal": goal.to_dict()}
    
     return response
 
@@ -87,8 +87,8 @@ def delete_goal(goal_id):
 def get_tasks_by_goal(goal_id):
     # goal = validate_goal(goal_id)
     goal = validate_model(Goal, goal_id)
-    response = goal.goal_dict()
-    response["tasks"] = [task.task_dict() for task in goal.tasks]
+    response = goal.to_dict()
+    response["tasks"] = [task.to_dict() for task in goal.tasks]
     return response
 
 @goals_bp.post("/<goal_id>/tasks")

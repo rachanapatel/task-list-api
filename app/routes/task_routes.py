@@ -2,32 +2,42 @@ from flask import Blueprint, request, abort, make_response, Response
 from app.models.task import Task
 from ..db import db
 from datetime import datetime
-from .route_utilities import validate_model
+from .route_utilities import validate_model, create_model
+import os
+from slack_sdk import WebClient
 
+# client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+# channel_id = "task-notifications"
+# send_msg = client.chat_postMessage(
+#         channel=channel_id, 
+#         text="SOMEONE just completed the task My Beautiful Task"
+#     )
 
 tasks_bp = Blueprint("tasks_bp", __name__, url_prefix="/tasks")
 
 @tasks_bp.post("")
 def create_tasks():
     request_body = request.get_json()
+    # task = create_model(Task, request_body)
+    return {"task": create_model(Task, request_body)[0]}, 201
    
-    try:
-        new_task = Task.from_dict(request_body)
-    except KeyError as error:
-        response_body = {"details": "Invalid data"}
-        abort(make_response(response_body, 400))
+    # try:
+    #     new_task = Task.from_dict(request_body)
+    # except KeyError as error:
+    #     response_body = {"details": "Invalid data"}
+    #     abort(make_response(response_body, 400))
 
-    db.session.add(new_task)
-    db.session.commit()
-    response = {"task": new_task.task_dict()}
-    return response, 201
+    # db.session.add(new_task)
+    # db.session.commit()
+    # response = {"task": new_task.to_dict()}
+    # return response, 201
 
 
 @tasks_bp.get("/<task_id>")
 def get_one_task(task_id):
     # task = validate_task(task_id)
     task = validate_model(Task, task_id)
-    response = {"task": task.task_dict()}
+    response = {"task": task.to_dict()}
    
     return response
 
@@ -60,7 +70,7 @@ def get_all_tasks():
 
     tasks_response = []
     for task in tasks:
-        tasks_response.append(task.task_dict())
+        tasks_response.append(task.to_dict())
     return tasks_response
 
 
@@ -87,13 +97,19 @@ def delete_task(task_id):
 def mark_complete(task_id):
     # task = validate_task(task_id)
     task = validate_model(Task, task_id)
+
+    if (task.id == 1):
+        client = WebClient(token=os.environ.get('SLACK_BOT_TOKEN'))
+        channel_id = "task-notifications"
+        client.chat_postMessage(channel=channel_id,
+                            text="Someone just completed the task My Beautiful Task")
+
     task.completed_at = datetime.now()
     
     if task.completed_at:
         task.is_complete = True
 
     db.session.commit()
-
 
     return Response(status=204, mimetype="application/json")
 
