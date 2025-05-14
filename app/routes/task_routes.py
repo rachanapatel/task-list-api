@@ -93,8 +93,9 @@ def mark_incomplete(task_id):
 
 def send_msg(task):
     channel_id = os.environ.get("TESTER_CHANNEL")
+    token = os.environ.get("SLACK_BOT_TOKEN")
     headers = {
-        "Authorization": f"Bearer {os.environ.get("SLACK_BOT_TOKEN")}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     data = {
