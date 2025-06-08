@@ -26,7 +26,7 @@ def create_tasks():
 
 @goals_bp.get("")
 def get_all_goals():
-    query = db.Select(Goal)
+    query = db.select(Goal)
 
     # sort_param = request.args.get("sort")
     # if sort_param == "asc":
@@ -103,8 +103,6 @@ def send_tasks_to_goals(goal_id):
     for task_id in request_body["task_ids"]:
         new_task = validate_model(Task, task_id)
         new_task.goal_id = goal_id
-        db.session.commit()
-
 
     db.session.commit()
     response = {"id": goal.id, 

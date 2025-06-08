@@ -26,7 +26,7 @@ def get_one_task(task_id):
 
 @tasks_bp.get("")
 def get_all_tasks():
-    query = db.Select(Task)
+    query = db.select(Task)
 
     sort_param = request.args.get("sort")
     if sort_param == "asc":
@@ -64,18 +64,9 @@ def delete_task(task_id):
 def mark_complete(task_id):
     task = validate_model(Task, task_id)
 
-    if (task.id == 1):
-        send_msg(task)
-        # client = WebClient(token=os.environ.get('SLACK_BOT_TOKEN'))
-        # channel_id = "task-notifications"
-        # client.chat_postMessage(channel=channel_id,
-        #                     text="Someone just completed the task My Beautiful Task")
+    send_msg(task)
 
     task.completed_at = datetime.now()
-    
-    if task.completed_at:
-        task.is_complete = True
-
     db.session.commit()
 
     return Response(status=204, mimetype="application/json")
